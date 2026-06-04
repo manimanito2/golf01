@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+
+<h2>Agregar Nuevo jugador</h2>
+<hr>
+<div class="center-container">
+  <form method="POST" action="{{ url_for('player.add_player') }}">
+
+    <label>Nombre:</label><br>
+    <input type="text" name="name" required><br><br>
+
+    <label>Handicap:</label><br>
+    <input type="number" name="handicap" step="0.1"><br><br>
+
+    <label>País:</label><br>
+    <input type="text" name="country"><br><br>
+
+    <label>Partida:</label><br>
+    <select name="match_id">
+      <option value="">-- Selecciona una partida --</option>
+      {% for m in matches %}
+        <option value="{{ m.id }}">{{ m.id }} - {{ m.campo }}</option>
+      {% endfor %}
+    </select><br><br>
+
+    <button type="submit" class="btn">Agregar jugador</button>
+    <a href="{{ url_for('player.list_players') }}" class="btn">Cancelar</a>
+
+  </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h2>Nueva Partida</h2>
+<hr>
+
+<div class="center-container" style="height:auto; padding-bottom:40px;">
+  <form method="POST" action="{{ url_for('match.new_match') }}" id="matchForm" style="max-width:540px;">
+
+    <!-- Campo -->
+    <label for="campo">Campo de Golf:</label>
+    <input type="text" name="campo" id="campo" placeholder="Ej: Bosque Real" required><br><br>
+
+    <!-- Jugadores -->
+    <label>Selecciona los jugadores:</label>
+    <div class="dropdown">
+      <input type="checkbox" id="toggle-dropdown" class="toggle-dropdown">
+      <label for="toggle-dropdown" class="dropdown-label">Seleccionar jugadores</label>
+      <div class="dropdown-menu" id="playerCheckboxes">
+        {% for p in players %}
+          <label class="checkbox-item">
+            <input type="checkbox" name="players" value="{{ p.id }}"
+                   data-name="{{ p.name }}" onchange="onPlayerChange()">
+            <span>{{ p.name }} (HCP: {{ p.handicap or '—' }})</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div><br>
+
+    <!-- Tipo de juego -->
+    <label for="tipo_juego">Tipo de juego:</label>
+    <select name="tipo_juego" id="tipo_juego" required style="width:100%;" onchange="onGameChange()">
+      <option value="" disabled selected>Selecciona un tipo de juego</option>
+      <optgroup label="Individuales">
+        <option value="Stroke Play">Stroke Play</option>
+        <option value="Stableford">Stableford</option>
+        <option value="Match Play">Match Play</option>
+        <option value="Skins Game">Skins Game</option>
+        <option value="Nassau">Nassau</option>
+        <option value="Wolf">Wolf</option>
+        <option value="Bingo-Bango-Bongo">Bingo-Bango-Bongo</option>
+      </optgroup>
+      <optgroup label="Por Equipos">
+        <option value="Best Ball">Best Ball</option>
+        <option value="Scramble">Scramble</option>
+        <option value="Alternate Shot">Alternate Shot</option>
+      </optgroup>
+    </select><br><br>
+
+    <!-- Tipo de partida -->
+    <label>Tipo de partida:</label><br>
+    <div style="display:flex; gap:20px; justify-content:center; margin-top:6px;">
+      <label class="radio-item"><input type="radio" name="tipo_partida" value="apuesta" required> Apuesta</label>
+      <label class="radio-item"><input type="radio" name="tipo_partida" value="amistoso"> Amistoso</label>
+    </div><br>
+
+    <!-- Asignación de equipos (solo juegos por equipo) -->
+    <div id="teamSection" style="display:none;">
+      <label>Asignar equipos:</label>
+      <div id="teamAssignments" style="margin-top:8px; border:1px solid #ddd; border-radius:8px; padding:10px; background:#f9f9f9;">
+        <p style="color:#888; font-size:0.85rem; margin:0;">Selecciona jugadores primero.</p>
+      </div><br>
+    </div>
+
+    <!-- Pares por hoyo -->
+    <label>Par por hoyo:</label>
+    <div style="display:grid; grid-template-columns:repeat(9,1fr); gap:4px; margin-top:8px;">
+      {% for h in range(1,19) %}
+        <div style="text-align:center;">
+          <div style="font-size:0.72rem; color:#555;">H{{ h }}</div>
+          <input type="number" name="par_{{ h }}" value="{{ pares_default[h-1] }}"
+                 min="3" max="6"
+                 style="width:100%; padding:3px; text-align:center; border:1px solid #ccc;
+                        border-radius:4px; font-size:0.85rem;">
+        </div>
+      {% endfor %}
+    </div><br>
+
+    <div class="buttons">
+      <button type="submit" class="btn">Crear Partida</button>
+      <a href="{{ url_for('match.list_matches') }}" class="btn">Volver</a>
+    </div>
+  </form>
+</div>
+
+<script>
+const JUEGOS_EQUIPO = {{ juegos_equipo | tojson }};
+
+function onGameChange() {
+  const juego = document.getElementById('tipo_juego').value;
+  const ts = document.getElementById('teamSection');
+  ts.style.display = JUEGOS_EQUIPO.includes(juego) ? 'block' : 'none';
+  if (JUEGOS_EQUIPO.includes(juego)) renderTeams();
+}
+
+function onPlayerChange() {
+  if (JUEGOS_EQUIPO.includes(document.getElementById('tipo_juego').value)) {
+    renderTeams();
+  }
+}
+
+function renderTeams() {
+  const checked = [...document.querySelectorAll('input[name="players"]:checked')];
+  const container = document.getElementById('teamAssignments');
+  if (checked.length === 0) {
+    container.innerHTML = '<p style="color:#888;font-size:0.85rem;margin:0;">Selecciona jugadores primero.</p>';
+    return;
+  }
+  container.innerHTML = checked.map(cb => `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
+      <span style="flex:1;font-weight:bold;">${cb.dataset.name}</span>
+      <label style="display:flex;align-items:center;gap:4px;">
+        <input type="radio" name="team_${cb.value}" value="1" checked>
+        <span style="background:#0B3D2E;color:white;padding:2px 10px;border-radius:12px;font-size:0.8rem;">Equipo A</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;">
+        <input type="radio" name="team_${cb.value}" value="2">
+        <span style="background:#D4AF37;color:#0B3D2E;padding:2px 10px;border-radius:12px;font-size:0.8rem;">Equipo B</span>
+      </label>
+    </div>`).join('');
+}
+</script>
+{% endblock %}

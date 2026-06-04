@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ titulo or "Golf App" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1 style="text-align: center;">Golf Press Manager</h1>
+        <p style="text-align: center;">"Foursome Press"</p>
+        <nav class="navbar">
+            <a href="{{ url_for('main.home') }}">Inicio</a> |           
+            <a href="{{ url_for('player.list_players') }}">Jugadores</a>  | 
+            <a href="{{ url_for('player.add_player') }}">Agregar Jugador</a> |  
+            <a href="{{ url_for('match.list_matches') }}">Partidas</a> | 
+            <a href="{{ url_for('match.new_match') }}">Nueva Partida</a> 
+        </nav>
+        <nav>
+            {% if current_user.is_authenticated %}
+                Hola, {{ current_user.username }} |
+                <a href="{{ url_for('auth.logout') }}" class="btn-global">Cerrar sesión</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn-global">Iniciar sesión</a>
+            {% endif %}
+        </nav>
+    </header>
+<hr>
+    <main>
+        {% block contenido %}{% endblock %}
+    </main>
+</body>
+</html>

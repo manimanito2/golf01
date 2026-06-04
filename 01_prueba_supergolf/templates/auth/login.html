@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Iniciar sesión{% endblock %}
+
+{% block contenido %}
+<div class="center-container">
+    <form method="post" action="{{ url_for('auth.login') }}">
+        <h2>Iniciar sesión</h2>
+        <div>
+            <label for="username">Usuario</label>
+            <input id="username" name="username" required />
+        </div>
+        <div>
+            <label for="password">Contraseña</label>
+            <input id="password" name="password" type="password" required />
+        </div>
+        <!-- Botón con clase global para estilo uniforme -->
+        <button type="submit" class="btn-global">Entrar</button>
+
+        <!-- Mensajes flash centrados -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul style="list-style: none; padding: 0; margin-top: 1rem; text-align: center;">
+            {% for category, message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+    </form>
+</div>
+{% endblock %}

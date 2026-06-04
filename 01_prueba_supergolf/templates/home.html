@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Apuestas de Golf</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1 style="text-align: center;">Bienvenido al sistema de apuestas de Golf (Foursome Press)</h1>
+    <p>Aquí podrás registrar jugadores, partidas y presiones (apuestas).</p>
+
+    <p><strong>Reglas Locales:</strong></p>
+    <ul>
+      <li>Regla 1: Todos los jugadores deben estar registrados.</li>
+      <li>Regla 2: Las apuestas solo se pueden realizar en partidas activas.</li>
+      <li>Regla 3: Se requiere un depósito mínimo para participar en las apuestas.</li>
+      <li>Regla 4: Las disputas se resolverán según las reglas oficiales de golf, como se establece a continuación:</li>
+      <ul>
+        <li><strong>Fuera de límites</strong>: señalado con estacas blancas, bardas, mallas y/o 
+          alambradas (las estacas blancas tienen preferencia sobre los demás señalamientos).</li>
+        <li><strong>Bola blanca en el fairway</strong>: señalada/circulada con cal o pintura blanca
+          (dropeo sin castigo al punto de alivio más cercano).</li>
+        <li><strong>ETC... aquí continúan las otras reglas.</strong></li>
+      </ul>
+    </ul>
+  </div>
+</body>
+</html>
+
+{% endblock %}

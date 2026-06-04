@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h2>Lista de Jugadores</h2>
+
+<a href="{{ url_for('player.add_player') }}" class="btn">Agregar Jugador</a>
+<hr>
+
+{% if players %}
+<table border="1" cellpadding="6">
+  <tr>
+    <th>ID</th>
+    <th>Nombre</th>
+    <th>Handicap</th>
+    <th>ID Partida</th> <!--Nueva columna -->
+    <th>País</th>
+    <th>Acción</th>
+  </tr>
+  {% for p in players %}
+  <tr>
+    <td>{{ p.id }}</td>
+    <td>{{ p.name }}</td>
+    <td>{{ p.handicap }}</td>
+    <td>{{ p.match_id if p.match_id else '–' }}</td> <!--Muestra el ID de la partida activa o guion -->
+    <td>{{ p.country }}</td>
+    <td>
+      <form action="{{ url_for('player.delete_player', player_id=p.id) }}" method="POST" onsubmit="return confirm('¿Eliminar a {{ p.name }}?');" style="display:inline">
+        <button type="submit" class="btn">🗑️ Eliminar</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No hay jugadores registrados aún.</p>
+{% endif %}
+
+{% endblock %}

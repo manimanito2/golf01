@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<div style="max-width:1100px; margin:0 auto;">
+
+  <!-- Cabecera -->
+  <div style="background:#0B3D2E;color:white;border-radius:10px;padding:16px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+    <div>
+      <h2 style="margin:0;color:white;text-shadow:none;">⛳ {{ match.campo or 'Sin campo' }}</h2>
+      <small>{{ match.fecha.strftime('%d/%m/%Y %H:%M') }}</small>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:#D4AF37;color:#0B3D2E;padding:4px 12px;border-radius:20px;font-weight:bold;">{{ match.tipo_juego }}</span>
+      <span style="background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:20px;">{{ match.tipo_partida|capitalize }}</span>
+      <span style="background:{% if match.estado=='activa' %}#28a745{% else %}#6c757d{% endif %};padding:4px 12px;border-radius:20px;">{{ match.estado|capitalize }}</span>
+    </div>
+  </div>
+
+  <form method="POST">
+
+    <!-- ── TABLA DE SCORES ── -->
+    <div style="overflow-x:auto;">
+      <table style="font-size:0.85rem;">
+        <thead>
+          <tr style="background:#0B3D2E;color:white;">
+            <th style="background:#0B3D2E;color:white;">Jugador</th>
+            {% for h in holes %}<th style="background:#0B3D2E;color:white;min-width:36px;">{{ h }}</th>{% endfor %}
+            <th style="background:#D4AF37;color:#0B3D2E;">Total</th>
+          </tr>
+          <tr style="background:#f9f3dc;">
+            <td style="font-weight:bold;background:#f9f3dc;">Par</td>
+            {% for p in pares %}<td style="background:#f9f3dc;color:#555;">{{ p }}</td>{% endfor %}
+            <td style="background:#f9f3dc;font-weight:bold;">{{ pares|sum }}</td>
+          </tr>
+        </thead>
+        <tbody>
+          {% for mp in mps %}
+          <tr>
+            <td style="font-weight:bold;white-space:nowrap;">
+              {{ mp.jugador.name }}
+              {% if mp.team %}<br><span style="font-size:0.72rem;background:{% if mp.team==1 %}#0B3D2E{% else %}#D4AF37{% endif %};color:{% if mp.team==1 %}white{% else %}#0B3D2E{% endif %};padding:1px 6px;border-radius:8px;">Eq.{{ 'AB'[mp.team-1] }}</span>{% endif %}
+              <br><small style="color:#888;">HCP: {{ mp.jugador.handicap or '—' }}</small>
+            </td>
+            {% for h in holes %}
+              {% set ms = scores_map[mp.id].get(h) %}
+              {% set par_h = pares[h-1] %}
+              {% set g = ms.golpes if ms else None %}
+              {% if g is not none %}
+                {% if   g <= par_h - 2 %}{% set bg='#ffd700' %}
+                {% elif g == par_h - 1 %}{% set bg='#d4edda' %}
+                {% elif g == par_h     %}{% set bg='#ffffff' %}
+                {% elif g == par_h + 1 %}{% set bg='#fde8e8' %}
+                {% else                %}{% set bg='#f5b7b1' %}{% endif %}
+              {% else %}{% set bg='#ffffff' %}{% endif %}
+              <td style="background:{{ bg }};">
+                {% if match.estado=='activa' %}
+                  <input type="number" name="score_{{ mp.id }}_{{ h }}"
+                         value="{{ g if g is not none else '' }}" min="1" max="20"
+                         style="width:36px;border:none;background:transparent;text-align:center;font-size:0.9rem;">
+                {% else %}
+                  {{ g if g is not none else '—' }}
+                {% endif %}
+              </td>
+            {% endfor %}
+            <td style="font-weight:bold;background:#f0f8ff;">{{ mp.score_total }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── SECCIÓN WOLF ── -->
+    {% if match.tipo_juego == 'Wolf' %}
+    <div style="background:white;border-radius:10px;padding:16px;margin-top:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+      <h3 style="color:#0B3D2E;margin-top:0;">🐺 Asignación Wolf por Hoyo</h3>
+      <p style="font-size:0.82rem;color:#666;">El wolf rota automáticamente. Elige compañero o "Lone Wolf" en cada hoyo.</p>
+      <div style="overflow-x:auto;">
+        <table style="font-size:0.83rem;">
+          <thead>
+            <tr style="background:#0B3D2E;color:white;">
+              <th style="background:#0B3D2E;color:white;">Hoyo</th>
+              <th style="background:#0B3D2E;color:white;">🐺 Wolf</th>
+              <th style="background:#0B3D2E;color:white;">Compañero</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in holes %}
+            {% set wolf_mp = mps[(h-1) % mps|length] %}
+            {% set hdata = wolf_data.get(h|string, {}) %}
+            <tr>
+              <td>{{ h }}</td>
+              <td style="font-weight:bold;background:#fff3cd;">{{ wolf_mp.jugador.name }}</td>
+              <td>
+                {% if match.estado == 'activa' %}
+                <select name="wolf_{{ h }}_partner" style="font-size:0.82rem;padding:3px;border-radius:4px;border:1px solid #ccc;">
+                  <option value="lone" {% if hdata.get('partner','lone')=='lone' %}selected{% endif %}>🐺 Lone Wolf</option>
+                  {% for mp in mps %}
+                    {% if mp.id != wolf_mp.id %}
+                    <option value="{{ mp.id }}" {% if hdata.get('partner','')|string == mp.id|string %}selected{% endif %}>
+                      {{ mp.jugador.name }}
+                    </option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+                {% else %}
+                  {% if hdata.get('partner','lone') == 'lone' %}🐺 Lone Wolf
+                  {% else %}
+                    {% for mp in mps %}{% if mp.id|string == hdata.get('partner','')|string %}{{ mp.jugador.name }}{% endif %}{% endfor %}
+                  {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── SECCIÓN BBB ── -->
+    {% if match.tipo_juego == 'Bingo-Bango-Bongo' %}
+    <div style="background:white;border-radius:10px;padding:16px;margin-top:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+      <h3 style="color:#0B3D2E;margin-top:0;">🎯 Bingo-Bango-Bongo por Hoyo</h3>
+      <p style="font-size:0.82rem;color:#666;">
+        <b>Bingo</b> = primero en verde &nbsp;|&nbsp;
+        <b>Bango</b> = más cercano al hoyo cuando todos están en verde &nbsp;|&nbsp;
+        <b>Bongo</b> = primero en embocar
+      </p>
+      <div style="overflow-x:auto;">
+        <table style="font-size:0.83rem;">
+          <thead>
+            <tr style="background:#0B3D2E;color:white;">
+              <th style="background:#0B3D2E;color:white;">Hoyo</th>
+              <th style="background:#28a745;color:white;">🟢 Bingo</th>
+              <th style="background:#007bff;color:white;">🔵 Bango</th>
+              <th style="background:#D4AF37;color:#0B3D2E;">⭐ Bongo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in holes %}
+            {% set hdata = bbb_data.get(h|string, {}) %}
+            <tr>
+              <td>{{ h }}</td>
+              {% for key in ('bingo','bango','bongo') %}
+              <td>
+                {% if match.estado == 'activa' %}
+                <select name="bbb_{{ h }}_{{ key }}" style="font-size:0.82rem;padding:3px;border-radius:4px;border:1px solid #ccc;">
+                  <option value="">—</option>
+                  {% for mp in mps %}
+                  <option value="{{ mp.id }}" {% if hdata.get(key,'')|string == mp.id|string %}selected{% endif %}>
+                    {{ mp.jugador.name }}
+                  </option>
+                  {% endfor %}
+                </select>
+                {% else %}
+                  {% for mp in mps %}{% if mp.id|string == hdata.get(key,'')|string %}{{ mp.jugador.name }}{% endif %}{% endfor %}
+                  {% if not hdata.get(key) %}—{% endif %}
+                {% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if match.estado == 'activa' %}
+    <div class="buttons" style="margin-top:16px;">
+      <button type="submit" class="btn">💾 Guardar</button>
+    </div>
+    {% endif %}
+  </form>
+
+  <!-- ── RESULTADOS ── -->
+  {% if resultados %}
+  <div style="background:white;border-radius:10px;padding:20px;margin-top:24px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    <h3 style="color:#0B3D2E;margin-top:0;">🏆 Resultados — {{ match.tipo_juego }}</h3>
+
+    {% if match.tipo_juego == 'Match Play' %}
+      <div style="overflow-x:auto;">
+        <table style="font-size:0.82rem;">
+          <thead>
+            <tr style="background:#0B3D2E;color:white;">
+              <th style="background:#0B3D2E;color:white;">Jugador</th>
+              {% for h in holes %}<th style="background:#0B3D2E;color:white;">{{ h }}</th>{% endfor %}
+              <th style="background:#D4AF37;color:#0B3D2E;">Resultado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in resultados %}
+            <tr>
+              <td style="font-weight:bold;">{{ r.jugador }}</td>
+              {% if r.detalle %}{% for v in r.detalle %}
+                <td style="text-align:center;background:{% if v=='W' %}#d4edda{% elif v=='L' %}#fde8e8{% elif v=='H' %}#fff3cd{% else %}#fff{% endif %};">{{ v }}</td>
+              {% endfor %}{% endif %}
+              <td style="font-weight:bold;">{{ r.total }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    {% elif match.tipo_juego == 'Skins Game' %}
+      <table style="font-size:0.9rem;max-width:400px;">
+        <thead><tr style="background:#0B3D2E;color:white;">
+          <th style="background:#0B3D2E;color:white;">Jugador</th>
+          <th style="background:#D4AF37;color:#0B3D2E;">Skins</th>
+        </tr></thead>
+        <tbody>{% for r in resultados %}<tr>
+          <td>{% if loop.first %}🥇{% elif loop.index==2 %}🥈{% elif loop.index==3 %}🥉{% endif %} {{ r.jugador }}</td>
+          <td style="font-weight:bold;text-align:center;">{{ r.total }}</td>
+        </tr>{% endfor %}</tbody>
+      </table>
+      {% if resultados[0].detalle %}
+      <details style="margin-top:12px;"><summary style="cursor:pointer;font-weight:bold;color:#0B3D2E;">Ver detalle por hoyo</summary>
+        <table style="font-size:0.83rem;margin-top:8px;max-width:300px;">
+          <thead><tr style="background:#f2f2f2;"><th>Hoyo</th><th>Ganador</th></tr></thead>
+          <tbody>{% for d in resultados[0].detalle %}<tr><td>{{ d.hoyo }}</td><td>{{ d.ganador }}</td></tr>{% endfor %}</tbody>
+        </table>
+      </details>
+      {% endif %}
+
+    {% elif match.tipo_juego == 'Nassau' %}
+      <table style="font-size:0.9rem;max-width:520px;">
+        <thead><tr style="background:#0B3D2E;color:white;">
+          <th style="background:#0B3D2E;color:white;">Jugador</th>
+          <th style="background:#0B3D2E;color:white;">Front 9</th>
+          <th style="background:#0B3D2E;color:white;">Back 9</th>
+          <th style="background:#D4AF37;color:#0B3D2E;">Total 18</th>
+        </tr></thead>
+        <tbody>{% for r in resultados %}
+        <tr>
+          <td style="font-weight:bold;">{{ r.jugador }}</td>
+          {% if r.nassau %}
+            {% for seg in ('front','back','total') %}
+            {% set w = r.nassau[seg][0] %}{% set l = r.nassau[seg][1] %}
+            <td style="text-align:center;font-weight:bold;background:{% if w>l %}#d4edda{% elif l>w %}#fde8e8{% else %}#fff3cd{% endif %};">
+              {% if w>l %}+{{ w-l }}{% elif l>w %}-{{ l-w }}{% else %}AS{% endif %}
+            </td>
+            {% endfor %}
+          {% else %}<td colspan="3">—</td>{% endif %}
+        </tr>{% endfor %}</tbody>
+      </table>
+
+    {% else %}
+      <!-- Stroke Play, Stableford, Best Ball, Scramble, Alternate Shot, Wolf, BBB -->
+      <table style="font-size:0.9rem;max-width:420px;">
+        <thead><tr style="background:#0B3D2E;color:white;">
+          <th style="background:#0B3D2E;color:white;">#</th>
+          <th style="background:#0B3D2E;color:white;">Jugador</th>
+          <th style="background:#D4AF37;color:#0B3D2E;">
+            {% if match.tipo_juego in ('Stableford','Wolf','Bingo-Bango-Bongo') %}Puntos
+            {% elif match.tipo_juego in ('Skins Game',) %}Skins
+            {% else %}Golpes{% endif %}
+          </th>
+        </tr></thead>
+        <tbody>{% for r in resultados %}<tr>
+          <td>{% if loop.first %}🥇{% elif loop.index==2 %}🥈{% elif loop.index==3 %}🥉{% else %}{{ loop.index }}{% endif %}</td>
+          <td>{{ r.jugador }}</td>
+          <td style="font-weight:bold;text-align:center;">{{ r.total }}</td>
+        </tr>{% endfor %}</tbody>
+      </table>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Botones finales -->
+  <div class="buttons" style="margin-top:20px;">
+    <a href="{{ url_for('match.list_matches') }}" class="btn">⬅ Volver</a>
+    {% if match.estado == 'activa' %}
+    <form method="POST" action="{{ url_for('match.finalizar_match', match_id=match.id) }}" style="margin:0;">
+      <button type="submit" class="btn" style="background:#6c757d;"
+              onclick="return confirm('¿Finalizar esta partida?')">✅ Finalizar</button>
+    </form>
+    {% endif %}
+    {% if current_user.role in ['admin','executive'] %}
+    <a href="{{ url_for('match.delete_match', match_id=match.id) }}" class="btn"
+       style="background:#c0392b;" onclick="return confirm('¿Eliminar esta partida?')">🗑️ Eliminar</a>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

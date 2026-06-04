@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h2>Lista de Partidas</h2>
+
+<a href="{{ url_for('match.new_match') }}" class="btn">➕ Crear Nueva Partida</a>
+<hr>
+
+{% if matches %}
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Campo</th>
+      <th>Fecha / Hora</th>
+      <th>Tipo de Juego</th>
+      <th>Partida</th>
+      <th>Estado</th>
+      <th>Jugadores</th>
+      <th>Acción</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in matches %}
+    <tr>
+      <td>{{ m.id }}</td>
+      <td>{{ m.campo or 'Sin nombre' }}</td>
+      <td>{{ m.fecha.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td><span style="background:#D4AF37; color:#0B3D2E; padding:2px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;">{{ m.tipo_juego or '—' }}</span></td>
+      <td>{{ m.tipo_partida | capitalize if m.tipo_partida else '—' }}</td>
+      <td>
+        <span style="background:{% if m.estado == 'activa' %}#28a745{% else %}#6c757d{% endif %}; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">
+          {{ m.estado | capitalize }}
+        </span>
+      </td>
+      <td>
+        {% if m.jugadores %}
+          {% for mp in m.jugadores %}{{ mp.jugador.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+        {% else %}Sin jugadores{% endif %}
+      </td>
+      <td style="white-space:nowrap;">
+        <a href="{{ url_for('match.scorecard', match_id=m.id) }}" class="btn">📋 Scorecard</a>
+        <a href="{{ url_for('match.delete_match', match_id=m.id) }}" class="btn" style="background:#c0392b;"
+           onclick="return confirm('¿Eliminar esta partida?')">🗑️</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No hay partidas registradas aún.</p>
+{% endif %}
+
+{% endblock %}

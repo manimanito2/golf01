@@ -1,0 +1,68 @@
+flask==3.0.3
+
+#---------------Super Golf Proyect — Documentación Técnica-------------#
+
+#----Contraseña----#
+usuario: admin
+Contraseña: Admin
+
+Stack Tecnológico
+
+1. Backend
+Lenguaje: Python 3.13
+Framework principal: Flask
+Manejo de rutas y vistas con Blueprints
+Sistema de plantillas con Jinja2
+Mensajería de usuario con flash()
+Controladores modulares (main_controller, player_controller, match_controller)
+
+2. Base de Datos
+SQLite — Base de datos ligera y embebida
+Archivo principal: instance/golf.db
+ORM: SQLAlchemy
+Modelos definidos: Player, Match, Press
+Operaciones CRUD mediante db.session
+
+3.Frontend
+HTML5 — Plantillas (home.html, list_players.html, etc.)
+CSS3 — Estilos personalizados (static/css/style.css)
+Jinja2 — Motor de plantillas de Flask ({% extends 'base.html' %}, {{ variable }})
+JavaScript — Interactividad básica (static/js/interacciones.js)
+
+4. Arquitectura del Proyecto
+Estructura basada en el patrón MVC (Modelo - Vista - Controlador):
+SUPER GOLF PROYECT/
+│── app.py
+│
+│── models/
+│   ├── __init__.py
+│   ├── player.py
+│   └── match.py
+│   └── press.py
+│
+│── controllers/
+│   ├── main_controller.py
+│   ├── player_controller.py
+│   └── match_controller.py
+│
+└── templates/
+│   ├── matches/
+│   │   ├── new_match.html
+│   │   └── list_matches.html
+│   │   └── scorecard.html
+│   ├── players/
+│   │   ├── list_players.html
+│   │   └── add_player.html
+│   ├── base.html
+│   ├── home.html
+│
+└── static/
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   └── interacciones.js
+│   └── img/
+│       └── logo.png
+│
+└── instance/
+│   ├── golf.db
